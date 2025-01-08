@@ -1,7 +1,6 @@
 package config
 
 import (
-	"fmt"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -46,6 +45,13 @@ type config struct {
 			SecretAccessKey string `yaml:"secretAccessKey"`
 		} `yaml:"minio"`
 	}
+
+	Zookeeper struct {
+		Schema   string   `yaml:"schema"`
+		ZkAddr   []string `yaml:"address"`
+		Username string   `yaml:"username"`
+		Password string   `yaml:"password"`
+	} `yaml:"zookeeper"`
 
 	Mysql struct {
 		DBAddress      []string `yaml:"dbMysqlAddress"`
@@ -96,10 +102,6 @@ type config struct {
 		OpenImAuthName               string `yaml:"openImAuthName"`
 		OpenImMessageCMSName         string `yaml:"openImMessageCMSName"`
 		OpenImAdminCMSName           string `yaml:"openImAdminCMSName"`
-	}
-	Etcd struct {
-		EtcdSchema string   `yaml:"etcdSchema"`
-		EtcdAddr   []string `yaml:"etcdAddr"`
 	}
 	Log struct {
 		StorageLocation       string   `yaml:"storageLocation"`
@@ -348,5 +350,4 @@ func init() {
 	if err = yaml.Unmarshal(bytes, &Config); err != nil {
 		panic(err.Error())
 	}
-	fmt.Println("load config: ", Config)
 }

@@ -21,14 +21,29 @@ import (
 	"time"
 
 	"github.com/go-zookeeper/zk"
+	"github.com/qingw1230/studyim/pkg/common/config"
+	"github.com/qingw1230/studyim/pkg/common/log"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/resolver"
+)
+
+var (
+	ZK *ZkClient
 )
 
 const (
 	defaultFreq = time.Minute * 30
 	timeout     = 5
 )
+
+func init() {
+	zk, err := NewClient(config.Config.Zookeeper.ZkAddr, config.Config.Zookeeper.Schema)
+	if err != nil {
+		ZK = zk
+	} else {
+		log.Error("", "cann't create zk client")
+	}
+}
 
 type Logger interface {
 	Printf(string, ...interface{})

@@ -10,10 +10,17 @@ import (
 var DB DataBases
 
 type DataBases struct {
+	MysqlDB   mysqlDB
 	redisPool *redis.Pool
 }
 
+func key(dbAddress, dbName string) string {
+	return dbAddress + "_" + dbName
+}
+
 func init() {
+	initMysqlDB()
+
 	DB.redisPool = &redis.Pool{
 		MaxIdle:     config.Config.Redis.DBMaxIdle,
 		MaxActive:   config.Config.Redis.DBMaxActive,

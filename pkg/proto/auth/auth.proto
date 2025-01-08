@@ -1,0 +1,25 @@
+syntax = "proto3";
+package pbAuth;
+option go_package = "github.com/qingw1230/studyim/pkg/proto/auth";
+
+message CommonResp{
+  int32   errCode = 1;
+  string  errMsg = 2;
+}
+
+message UserTokenReq {
+  int32  Platform = 1;
+  string FromUserID = 2;
+  string OpUserID = 3;
+  string OperationID = 4;
+}
+
+message UserTokenResp {
+  CommonResp CommonResp = 1;
+  string Token = 2;
+  int64  ExpiredTime = 3;
+}
+
+service Auth {
+  rpc UserToken(UserTokenReq) returns(UserTokenResp);
+}

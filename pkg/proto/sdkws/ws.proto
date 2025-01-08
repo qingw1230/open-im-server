@@ -1,0 +1,3 @@
+syntax = "proto3";
+package server_api_params;
+option go_package = "github.com/qingw1230/studyim/pkg/proto/sdkws";

@@ -1,0 +1,28 @@
+syntax = "proto3";
+import "sdkws/ws.proto";
+package pbChat;
+option go_package = "github.com/qingw1230/studyim/pkg/proto/chat";
+
+message MsgDataToMQ {
+  string token = 1;
+  string operationID = 2;
+  server_api_params.MsgData msgData = 3;
+}
+
+message SendMsgReq {
+  string token =1;
+  string operationID = 2;
+  server_api_params.MsgData msgData = 3;
+}
+
+message SendMsgResp {
+  int32 errCode = 1;
+  string errMsg = 2;
+  string serverMsgID = 4;
+  string clientMsgID = 5;
+  int64  sendTime = 6;
+}
+
+service Chat {
+  rpc SendMsg(SendMsgReq) returns(SendMsgResp);
+}

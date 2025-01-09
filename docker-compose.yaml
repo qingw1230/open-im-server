@@ -27,17 +27,31 @@ services:
       net.core.somaxconn: 1024
     command: redis-server --requirepass openIM --appendonly yes
 
-  # zookeeper:
-  #   image: wurstmeister/zookeeper
-  #   container_name: zookeeper
-  #   ports:
-  #     - "12181:2181"
-  #   volumes:
-  #     - "/etc/localtime:/etc/localtime"
-  #   environment:
-  #     - ALLOW_ANONYMOUS_LOGIN=yes
-  #     - TZ="Asia/Shanghai"
-  #   restart: always
+  zookeeper:
+    image: wurstmeister/zookeeper
+    container_name: zookeeper
+    ports:
+      - "12181:2181"
+    volumes:
+      - "/etc/localtime:/etc/localtime"
+    environment:
+      ALLOW_ANONYMOUS_LOGIN: yes
+      TZ: Asia/Shanghai
+    restart: always
+  
+  kafka:
+    image: wurstmeister/kafka
+    container_name: kafka
+    environment:
+      TZ: Asia/Shanghai
+      KAFKA_BROKER_ID: 0
+      KAFKA_ZOOKEEPER_CONNECT: 127.0.0.1:12181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://127.0.0.1:9092
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092
+    restart: always
+    network_mode: "host"
+    depends_on:
+      - zookeeper
   
   etcd:
     image: quay.io/coreos/etcd:v3.5.0

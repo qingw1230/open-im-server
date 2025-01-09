@@ -38,10 +38,10 @@ redis:
 
 kafka:
   ws2mschat:
-    addr: [ 127.0.0.1:9092 ] # kafka配置，默认即可
+    addr: [ 127.0.0.1:9092 ]
     topic: "ws2ms_chat"
   ms2pschat:
-    addr: [ 127.0.0.1:9092 ] # kafka配置，默认即可
+    addr: [ 127.0.0.1:9092 ]
     topic: "ms2ps_chat"
   consumergroupid:
     msgToMongo: mongo

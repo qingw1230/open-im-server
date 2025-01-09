@@ -1,10 +1,20 @@
 syntax = "proto3";
+import "sdkws/ws.proto";
 package pbAuth;
 option go_package = "github.com/qingw1230/studyim/pkg/proto/auth";
 
 message CommonResp{
   int32   errCode = 1;
   string  errMsg = 2;
+}
+
+message UserRegisterReq {
+  server_api_params.UserInfo UserInfo = 1;
+  string OperationID = 2;
+}
+
+message UserRegisterResp {
+  CommonResp CommonResp = 1;
 }
 
 message UserTokenReq {
@@ -21,5 +31,6 @@ message UserTokenResp {
 }
 
 service Auth {
+  rpc UserRegister(UserRegisterReq) returns(UserRegisterResp);
   rpc UserToken(UserTokenReq) returns(UserTokenResp);
 }

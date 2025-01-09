@@ -8,6 +8,7 @@ import (
 
 	"github.com/qingw1230/studyim/pkg/common/config"
 	"github.com/qingw1230/studyim/pkg/common/constant"
+	"github.com/qingw1230/studyim/pkg/common/db"
 	"github.com/qingw1230/studyim/pkg/common/db/mysql_model/im_mysql_model"
 	"github.com/qingw1230/studyim/pkg/common/log"
 	"github.com/qingw1230/studyim/pkg/common/token_verify"
@@ -17,7 +18,26 @@ import (
 	"google.golang.org/grpc"
 )
 
+func (rpc *rpcAuth) UserRegister(_ context.Context, req *pbAuth.UserRegisterReq) (*pbAuth.UserRegisterResp, error) {
+	log.Info(req.OperationID, "UserRegister args ", req.String())
+
+	var user db.User
+	utils.CopyStructFields(&user, req.UserInfo)
+	if req.UserInfo.Birth != 0 {
+		user.Birth = utils.UnixSecondToTime(int64(req.UserInfo.Birth))
+	}
+	err := im_mysql_model.UserRegister(user)
+	if err != nil {
+		log.Error(req.OperationID, "UserRegister failed ", err.Error(), user)
+		return &pbAuth.UserRegisterResp{CommonResp: &pbAuth.CommonResp{ErrCode: constant.ErrDB.ErrCode, ErrMsg: constant.ErrDB.ErrMsg}}, nil
+	}
+	log.Info(req.OperationID, "rpc UserRegister return")
+	return &pbAuth.UserRegisterResp{CommonResp: &pbAuth.CommonResp{}}, nil
+}
+
 func (rpc *rpcAuth) UserToken(_ context.Context, req *pbAuth.UserTokenReq) (*pbAuth.UserTokenResp, error) {
+	log.Info(req.OperationID, "UserToken args ", req.String())
+
 	_, err := im_mysql_model.GetUserByUserID(req.FromUserID)
 	if err != nil {
 		return &pbAuth.UserTokenResp{CommonResp: &pbAuth.CommonResp{ErrCode: constant.ErrDB.ErrCode, ErrMsg: constant.ErrDB.ErrMsg}}, nil
@@ -27,6 +47,7 @@ func (rpc *rpcAuth) UserToken(_ context.Context, req *pbAuth.UserTokenReq) (*pbA
 	if err != nil {
 		return &pbAuth.UserTokenResp{CommonResp: &pbAuth.CommonResp{ErrCode: constant.ErrDB.ErrCode, ErrMsg: constant.ErrDB.ErrMsg}}, nil
 	}
+	log.Info(req.OperationID, "rpc UserToken return")
 	return &pbAuth.UserTokenResp{CommonResp: &pbAuth.CommonResp{}, Token: token, ExpiredTime: expTime}, nil
 }
 

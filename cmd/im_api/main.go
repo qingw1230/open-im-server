@@ -19,6 +19,7 @@ func main() {
 	// certificate
 	authRouterGroup := r.Group("/auth")
 	{
+		authRouterGroup.POST("/user_register", apiAuth.UserRegister)
 		authRouterGroup.POST("/user_token", apiAuth.UserToken)
 	}
 

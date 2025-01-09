@@ -19,13 +19,15 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	Auth_UserToken_FullMethodName = "/pbAuth.Auth/UserToken"
+	Auth_UserRegister_FullMethodName = "/pbAuth.Auth/UserRegister"
+	Auth_UserToken_FullMethodName    = "/pbAuth.Auth/UserToken"
 )
 
 // AuthClient is the client API for Auth service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type AuthClient interface {
+	UserRegister(ctx context.Context, in *UserRegisterReq, opts ...grpc.CallOption) (*UserRegisterResp, error)
 	UserToken(ctx context.Context, in *UserTokenReq, opts ...grpc.CallOption) (*UserTokenResp, error)
 }
 
@@ -35,6 +37,16 @@ type authClient struct {
 
 func NewAuthClient(cc grpc.ClientConnInterface) AuthClient {
 	return &authClient{cc}
+}
+
+func (c *authClient) UserRegister(ctx context.Context, in *UserRegisterReq, opts ...grpc.CallOption) (*UserRegisterResp, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(UserRegisterResp)
+	err := c.cc.Invoke(ctx, Auth_UserRegister_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
 }
 
 func (c *authClient) UserToken(ctx context.Context, in *UserTokenReq, opts ...grpc.CallOption) (*UserTokenResp, error) {
@@ -51,6 +63,7 @@ func (c *authClient) UserToken(ctx context.Context, in *UserTokenReq, opts ...gr
 // All implementations must embed UnimplementedAuthServer
 // for forward compatibility.
 type AuthServer interface {
+	UserRegister(context.Context, *UserRegisterReq) (*UserRegisterResp, error)
 	UserToken(context.Context, *UserTokenReq) (*UserTokenResp, error)
 	mustEmbedUnimplementedAuthServer()
 }
@@ -62,6 +75,9 @@ type AuthServer interface {
 // pointer dereference when methods are called.
 type UnimplementedAuthServer struct{}
 
+func (UnimplementedAuthServer) UserRegister(context.Context, *UserRegisterReq) (*UserRegisterResp, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UserRegister not implemented")
+}
 func (UnimplementedAuthServer) UserToken(context.Context, *UserTokenReq) (*UserTokenResp, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UserToken not implemented")
 }
@@ -84,6 +100,24 @@ func RegisterAuthServer(s grpc.ServiceRegistrar, srv AuthServer) {
 		t.testEmbeddedByValue()
 	}
 	s.RegisterService(&Auth_ServiceDesc, srv)
+}
+
+func _Auth_UserRegister_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UserRegisterReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthServer).UserRegister(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Auth_UserRegister_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthServer).UserRegister(ctx, req.(*UserRegisterReq))
+	}
+	return interceptor(ctx, in, info, handler)
 }
 
 func _Auth_UserToken_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -111,6 +145,10 @@ var Auth_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "pbAuth.Auth",
 	HandlerType: (*AuthServer)(nil),
 	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "UserRegister",
+			Handler:    _Auth_UserRegister_Handler,
+		},
 		{
 			MethodName: "UserToken",
 			Handler:    _Auth_UserToken_Handler,

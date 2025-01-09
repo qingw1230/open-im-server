@@ -20,12 +20,12 @@ type RegEtcd struct {
 
 var rEtcd *RegEtcd
 
-// "%s:///%s/"
+// "schema:///serviceName/"
 func GetPrefix(schema, serviceName string) string {
 	return fmt.Sprintf("%s:///%s/", schema, serviceName)
 }
 
-// "%s:///%s"
+// "schema:///serviceName"
 func GetPrefix4Unique(schema, serviceName string) string {
 	return fmt.Sprintf("%s:///%s", schema, serviceName)
 }
@@ -36,32 +36,30 @@ func RegisterEtcd4Unique(schema, etcdAddr, myHost string, myPort int, serviceNam
 	return RegisterEtcd(schema, etcdAddr, myHost, myPort, serviceName, ttl)
 }
 
-// etcdAddr separated by commas
 func RegisterEtcd(schema, etcdAddr, myHost string, myPort int, serviceName string, ttl int) error {
-	cli, err := clientv3.New(clientv3.Config{
-		Endpoints: strings.Split(etcdAddr, ","), DialTimeout: 5 * time.Second})
-	fmt.Println("RegisterEtcd")
+	cli, err := clientv3.New(clientv3.Config{Endpoints: strings.Split(etcdAddr, ","), DialTimeout: 5 * time.Second})
 	if err != nil {
-		return fmt.Errorf("create etcd clientv3 client failed, errmsg:%v, etcd addr:%s", err, etcdAddr)
+		return fmt.Errorf("create etcd clientv3 client failed, errmsg: %v, etcd addr: %s", err, etcdAddr)
 	}
+	fmt.Println("RegisterEtcd")
 
-	//lease
+	// lease
 	ctx, cancel := context.WithCancel(context.Background())
 	resp, err := cli.Grant(ctx, int64(ttl))
 	if err != nil {
 		return fmt.Errorf("grant failed")
 	}
 
-	//  schema:///serviceName/ip:port ->ip:port
+	// schema:///serviceName/ip:port -> ip:port
 	serviceValue := net.JoinHostPort(myHost, strconv.Itoa(myPort))
 	serviceKey := GetPrefix(schema, serviceName) + serviceValue
-
-	//set key->value
+	fmt.Printf("serviceKey: %s, serviceValue: %s\n", serviceKey, serviceValue)
+	// set key->value
 	if _, err := cli.Put(ctx, serviceKey, serviceValue, clientv3.WithLease(resp.ID)); err != nil {
 		return fmt.Errorf("put failed, errmsg:%v, key:%s, value:%s", err, serviceKey, serviceValue)
 	}
 
-	//keepalive
+	// keepalive
 	kresp, err := cli.KeepAlive(ctx, resp.ID)
 	if err != nil {
 		return fmt.Errorf("keepalive failed, errmsg:%v, lease id:%d", err, resp.ID)
@@ -72,7 +70,7 @@ func RegisterEtcd(schema, etcdAddr, myHost string, myPort int, serviceName strin
 			select {
 			case v, ok := <-kresp:
 				if ok == true {
-					//	fmt.Println(" kresp ok ", v)
+					// fmt.Println(" kresp ok ", v)
 				} else {
 					fmt.Println(" kresp failed ", v)
 				}
@@ -89,7 +87,7 @@ func RegisterEtcd(schema, etcdAddr, myHost string, myPort int, serviceName strin
 }
 
 func UnRegisterEtcd() {
-	//delete
+	// delete
 	rEtcd.cancel()
 	rEtcd.cli.Delete(rEtcd.ctx, rEtcd.key)
 }

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/qingw1230/studyim/pkg/common/log"
 	"go.etcd.io/etcd/api/v3/mvccpb"
 	clientv3 "go.etcd.io/etcd/client/v3"
 
@@ -13,6 +14,7 @@ import (
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/balancer/roundrobin"
+	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/resolver"
 )
 
@@ -32,9 +34,7 @@ var (
 )
 
 func NewResolver(schema, etcdAddr, serviceName string) (*Resolver, error) {
-	etcdCli, err := clientv3.New(clientv3.Config{
-		Endpoints: strings.Split(etcdAddr, ","),
-	})
+	etcdCli, err := clientv3.New(clientv3.Config{Endpoints: strings.Split(etcdAddr, ",")})
 	if err != nil {
 		return nil, err
 	}
@@ -49,7 +49,7 @@ func NewResolver(schema, etcdAddr, serviceName string) (*Resolver, error) {
 	conn, err := grpc.Dial(
 		GetPrefix(schema, serviceName),
 		grpc.WithDefaultServiceConfig(fmt.Sprintf(`{"LoadBalancingPolicy": "%s"}`, roundrobin.Name)),
-		grpc.WithInsecure(),
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
 		grpc.WithTimeout(time.Duration(5)*time.Second),
 	)
 	if err == nil {
@@ -65,6 +65,7 @@ func (r1 *Resolver) Close() {
 }
 
 func GetConn(schema, etcdaddr, serviceName string) *grpc.ClientConn {
+	log.Info("", schema, etcdaddr, serviceName, "get conn")
 	rwNameResolverMutex.RLock()
 	r, ok := nameResolver[schema+serviceName]
 	rwNameResolverMutex.RUnlock()
@@ -73,20 +74,19 @@ func GetConn(schema, etcdaddr, serviceName string) *grpc.ClientConn {
 	}
 
 	rwNameResolverMutex.Lock()
+	defer rwNameResolverMutex.Unlock()
 	r, ok = nameResolver[schema+serviceName]
 	if ok {
-		rwNameResolverMutex.Unlock()
 		return r.grpcClientConn
 	}
 
 	r, err := NewResolver(schema, etcdaddr, serviceName)
 	if err != nil {
-		rwNameResolverMutex.Unlock()
 		return nil
 	}
 
 	nameResolver[schema+serviceName] = r
-	rwNameResolverMutex.Unlock()
+	log.Info("", schema, etcdaddr, serviceName, "get conn success")
 	return r.grpcClientConn
 }
 
@@ -97,7 +97,7 @@ func (r *Resolver) Build(target resolver.Target, cc resolver.ClientConn, opts re
 	r.cc = cc
 
 	ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
-	//     "%s:///%s"
+	// "%s:///%s"
 	prefix := GetPrefix(r.schema, r.serviceName)
 	// get key first
 	resp, err := r.cli.Get(ctx, prefix, clientv3.WithPrefix())
@@ -178,7 +178,6 @@ func (r *Resolver) watch(prefix string, addrList []resolver.Address) {
 func GetConn4Unique(schema, etcdaddr, servicename string) []*grpc.ClientConn {
 	gEtcdCli, err := clientv3.New(clientv3.Config{Endpoints: strings.Split(etcdaddr, ",")})
 	if err != nil {
-		fmt.Println("eeeeeeeeeeeee", err.Error())
 		return nil
 	}
 
@@ -258,6 +257,7 @@ func NewPool(schema, etcdaddr, servicename string) *Pool {
 
 	return service2pool[schema+servicename]
 }
+
 func GetGrpcConn(schema, etcdaddr, servicename string) *grpc.ClientConn {
 	return nameResolver[schema+servicename].grpcClientConn
 }

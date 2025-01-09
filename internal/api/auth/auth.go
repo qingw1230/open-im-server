@@ -3,14 +3,14 @@ package auth
 import (
 	"context"
 	"net/http"
-	"strings"
 
 	"github.com/gin-gonic/gin"
 	api "github.com/qingw1230/studyim/pkg/base_info"
 	"github.com/qingw1230/studyim/pkg/common/config"
 	"github.com/qingw1230/studyim/pkg/common/log"
-	"github.com/qingw1230/studyim/pkg/grpc-etcdv3/getcdv3"
 	rpc "github.com/qingw1230/studyim/pkg/proto/auth"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 func UserToken(c *gin.Context) {
@@ -29,7 +29,10 @@ func UserToken(c *gin.Context) {
 
 	req := &rpc.UserTokenReq{Platform: params.Platform, FromUserID: params.UserID, OperationID: params.OperationID}
 	log.Info(req.OperationID, "UserToken args ", req.String())
-	etcdConn := getcdv3.GetConn(config.Config.Etcd.EtcdSchema, strings.Join(config.Config.Etcd.EtcdAddr, ","), config.Config.RpcRegisterName.OpenImAuthName)
+	etcdConn, err := grpc.NewClient("127.0.0.1:10600", grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"errCode": 500, "errMsg": err.Error()})
+	}
 	client := rpc.NewAuthClient(etcdConn)
 	reply, err := client.UserToken(context.Background(), req)
 	if err != nil {

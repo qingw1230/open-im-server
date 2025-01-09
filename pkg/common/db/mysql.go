@@ -47,23 +47,17 @@ func initMysqlDB() {
 		log.Error("0", "Open failed ", err.Error(), dsn)
 		panic(err.Error())
 	}
+	log.Info("open db ok ", dsn)
 
-	sqlTable := "CREATE TABLE IF NOT EXISTS `user` (" +
-		" `uid` varchar(64) NOT NULL," +
-		" `name` varchar(64) DEFAULT NULL," +
-		" `icon` varchar(1024) DEFAULT NULL," +
-		" `gender` tinyint(4) unsigned zerofill DEFAULT NULL," +
-		" `mobile` varchar(32) DEFAULT NULL," +
-		" `birth` varchar(16) DEFAULT NULL," +
-		" `email` varchar(64) DEFAULT NULL," +
-		" `ex` varchar(1024) DEFAULT NULL," +
-		" `create_time` datetime DEFAULT NULL," +
-		" PRIMARY KEY (`uid`)," +
-		" UNIQUE KEY `uk_uid` (`uid`)" +
-		" ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;"
-	err = db.Exec(sqlTable).Error
-	if err != nil {
-		panic(err.Error())
+	db.AutoMigrate(
+		&User{},
+	)
+	db.Set("gorm:table_options", "CHARSET=utf8")
+	db.Set("gorm:table_options", "collation=utf8_unicode_ci")
+
+	if !db.HasTable(&User{}) {
+		log.Info("CreateTable User")
+		db.CreateTable(&User{})
 	}
 }
 

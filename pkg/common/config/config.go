@@ -46,12 +46,10 @@ type config struct {
 		} `yaml:"minio"`
 	}
 
-	Zookeeper struct {
-		Schema   string   `yaml:"schema"`
-		ZkAddr   []string `yaml:"address"`
-		Username string   `yaml:"username"`
-		Password string   `yaml:"password"`
-	} `yaml:"zookeeper"`
+	Etcd struct {
+		EtcdSchema string   `yaml:"etcdSchema"`
+		EtcdAddr   []string `yaml:"etcdAddr"`
+	}
 
 	Mysql struct {
 		DBAddress      []string `yaml:"dbMysqlAddress"`

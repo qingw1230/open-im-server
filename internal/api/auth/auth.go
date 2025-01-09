@@ -3,12 +3,13 @@ package auth
 import (
 	"context"
 	"net/http"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	api "github.com/qingw1230/studyim/pkg/base_info"
 	"github.com/qingw1230/studyim/pkg/common/config"
 	"github.com/qingw1230/studyim/pkg/common/log"
-	"github.com/qingw1230/studyim/pkg/discoveryregistry/zookeeper"
+	"github.com/qingw1230/studyim/pkg/grpc-etcdv3/getcdv3"
 	rpc "github.com/qingw1230/studyim/pkg/proto/auth"
 )
 
@@ -27,8 +28,9 @@ func UserToken(c *gin.Context) {
 	}
 
 	req := &rpc.UserTokenReq{Platform: params.Platform, FromUserID: params.UserID, OperationID: params.OperationID}
-	conn, _ := zookeeper.ZK.GetConn(context.Background(), config.Config.RpcRegisterName.OpenImAuthName)
-	client := rpc.NewAuthClient(conn)
+	log.Info(req.OperationID, "UserToken args ", req.String())
+	etcdConn := getcdv3.GetConn(config.Config.Etcd.EtcdSchema, strings.Join(config.Config.Etcd.EtcdAddr, ","), config.Config.RpcRegisterName.OpenImAuthName)
+	client := rpc.NewAuthClient(etcdConn)
 	reply, err := client.UserToken(context.Background(), req)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"errCode": 500, "errMsg": err.Error()})

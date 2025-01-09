@@ -202,7 +202,6 @@ func GetConn4Unique(schema, etcdaddr, servicename string) []*grpc.ClientConn {
 		}
 	} else {
 		gEtcdCli.Close()
-		fmt.Println("rrrrrrrrrrr", err.Error())
 		return nil
 	}
 	gEtcdCli.Close()

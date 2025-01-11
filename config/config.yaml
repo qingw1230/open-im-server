@@ -54,7 +54,7 @@ mongo:
   address: [ 127.0.0.1:37017 ]
   database: openIM_v3
   username: openIM
-  password: openIM123
+  password: openIM123456
   maxPoolSize: 100
 
 ###################### Redis configuration information ######################
